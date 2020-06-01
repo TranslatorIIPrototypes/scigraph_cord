@@ -59,6 +59,7 @@ garbage_curies = set(['MONDO:0019395', #Hinman syndrome with synonym "HAS",
                       'CHEBI:33893', #reagent
                       'MONDO:0045042', #localized
                       'FOODON:03430131', #whole
+                      'FOODON:03412846', #bacteria as food
                       'HP:0025303', #episodic
                       'HP:0003745', #Sporadic
                       'HP:0003676', #Progressive
@@ -68,8 +69,22 @@ garbage_curies = set(['MONDO:0019395', #Hinman syndrome with synonym "HAS",
                       'HP:0012833', #Unilateral
                       'CHEBI:75830', #HOME
                       'CHEBI:33731', #cluster
+                      'NCBITaxon:kingdom',
+                      'NCBITaxon:phylum',
+                      'NCBITaxon:subphylum',
                       'NCBITaxon:class',
+                      'NCBITaxon:subclass',
+                      'NCBITaxon:order',
+                      'NCBITaxon:superfamily',
+                      'NCBITaxon:family',
+                      'NCBITaxon:subfamily',
+                      'NCBITaxon:genus',
                       'NCBITaxon:species',
+                      'NCBITaxon:tribe',
+                      'NCBITaxon:9605', #Homo
+                      'NCBITaxon:3846', #Glycine (?)
+                      'NCBITaxon:1', #Root
+                      'NCBITaxon:2', #Bacteria
                       'MONDO:0021141', #acquired
                       'ENVO:00000444', #clearing
                       'ENVO:00000427', #meander
@@ -82,6 +97,7 @@ garbage_curies = set(['MONDO:0019395', #Hinman syndrome with synonym "HAS",
                       'ENVO:00000480', #peak
                       'HP:0012829', #Profound
                       'HP:0025285', #Aggravated by
+                      'UPHENO:0001001', #PHENOTYPE
                       ])
 
 
@@ -91,7 +107,7 @@ unused_prefixes = ['DDANAT', 'UO', 'SO', 'RO', 'EFO', 'PR', 'MF', 'OBI', 'VO',
                    'OGMS', 'FMA', 'MP', 'MPATH', 'NBO', 'MA', 'UBPROP', 'UBREL',
                    'CARO', 'PCO', 'OBA', 'CLO', 'EO', 'FBBT', 'CHMO', 'SIO', 'OMIT',
                    'CP', 'GAZ', 'ORPHANET', 'TO', 'OPL', 'ZFA', 'NCIT', 'ZEA', 'MOD',
-                   'MGI', 'REO', 'OMIABIS', 'GENE', 'WBLS','DEPICTED']
+                   'MGI', 'REO', 'OMIABIS', 'GENE', 'WBLS','DEPICTED','UPHENO','LOCUS']
 
 class Normalizer():
     def __init__(self):
@@ -132,8 +148,13 @@ class Normalizer():
            iri.startswith('http://purl.org/dc/elements/') or \
            iri.startswith('http://purl.org/dc/terms/') or \
            iri.startswith('http://xmlns.com/foaf/') or \
+           iri.startswith('http://www.ensembl.org/') or \
            iri.startswith('http://flybase.org/') or \
+           iri.startswith('http://dictybase.org/') or \
+           iri.startswith('http://www.pombase.org/') or \
+           iri.startswith('http://zfin.org/') or \
            iri.startswith('http://www.informatics.jax.org/') or \
+           iri.startswith('http://www.yeastgenome.org/cgi-bin/') or \
            iri.startswith('https://www.wikidata.org/'):
            return None
         ns = iri.split('/')
@@ -236,11 +257,13 @@ class Normalizer():
                     self.curie_to_type[gc] = prefix_to_types['HsapDv']
                 else:
                     print('?')
-                    print(prefix)
-                    print(gc)
+                    #print(prefix)
+                    #print(gc)
                     print(normcurie)
-                    print(self.curie_to_iri[gc])
-                    exit()
+                    #print(self.curie_to_iri[gc])
+                    #exit()
+                    self.curie_to_normalized[gc]=normcurie
+                    self.curie_to_type[gc]=['named_thing']
     def _remove_obsolete_terms(self):
         # If the label is "obsolete" something or another, we want to get rid of it...
         bad_curies = set()
@@ -302,17 +325,22 @@ class Normalizer():
                     continue
 
 
-def normalize(indir,outdir):
+def normalize(indir,outdir,pmidcol=1,termcol=7,labelcol=8):
     normy = Normalizer()
     rfiles = os.listdir(indir)
-    #for rf in rfiles[:1]:
+    #pmidcol = 1
+    #termcol = 7
+    #labelcol=8
     for rf in rfiles:
         with open(f'{indir}/{rf}','r') as inf:
             for line in inf:
                 x = line.strip().split('\t')
-                pmid = x[0]
-                term = x[6]
-                label = x[7].split(']')[0][1:]
+                pmid = x[pmidcol]
+                term = x[termcol]
+                if labelcol is not None:
+                    label = x[labelcol].split(']')[0][1:]
+                else:
+                    label=None
                 normy.add(term,label)
     normy.normalize_all()
     normy.write(f'{outdir}/normalized.txt')
@@ -322,9 +350,9 @@ def normalize(indir,outdir):
             outf.write('Curie\tPaper\n')
             for line in inf:
                 x = line.strip().split('\t')
-                pmid = x[0]
+                pmid = x[pmidcol]
                 papers.add(pmid)
-                term = x[6]
+                term = x[termcol]
                 curie = normy.normalize(term)
                 if curie is not None:
                     outf.write(f'{curie}\t{pmid}\n')
