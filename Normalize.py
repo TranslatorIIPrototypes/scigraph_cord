@@ -98,6 +98,16 @@ garbage_curies = set(['MONDO:0019395', #Hinman syndrome with synonym "HAS",
                       'HP:0012829', #Profound
                       'HP:0025285', #Aggravated by
                       'UPHENO:0001001', #PHENOTYPE
+                      'NCBIGene:5978', #REST
+                      'NCBIGene:3266', #ERAS
+                      'NCBIGene:126669', #SHE
+                      'NCBITaxon:695168', #AREAS
+                      'NCBITaxon:12939', #Anemia.  Who the &*(@&# names a fern anemia?
+                      'NCBITaxon:1369087', #data
+                      'NCBITaxon:3493', #fig
+                      'NCBIGene:1674', #DES, which is a common word in french
+                      'CHEBI:27889', #lead
+                      'GO:0043336', # has synonym REST
                       ])
 
 
