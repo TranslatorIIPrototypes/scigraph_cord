@@ -5,70 +5,70 @@ from collections import defaultdict
 
 #These are curies that tend to give a lot of false positives, or are generally
 # too general to be of interest
-garbage_curies = set(['MONDO:0019395', #Hinman syndrome with synonym "HAS",
-                      'MONDO:0012833', #"CAN"
-                      'MONDO:0000001', #disease
-                      'MONDO:0004967', #"ALL"
-                      'UBERON:0014899', #"ALL",
+garbage_curies = set(['MONDO:0019395',  #Hinman syndrome with synonym "HAS",
+                      'MONDO:0012833',  #"CAN"
+                      'MONDO:0000001',  #disease
+                      'MONDO:0004967',  #"ALL"
+                      'UBERON:0014899',  #"ALL",
                       'HP:0000001',
-                      'UBERON:0006611', #Has synonym test
-                      'ENVO:00000026', #well
-                      'CHEBI:33232', #application
-                      'CHEBI:75958', #solution
-                      'ENVO:01000584', #table
-                      'ENVO:2000036', #generates
-                      'HP:0012824', #severity
-                      'HP:0012830', #Position
-                      'HP:0012834', #Right
-                      'HP:0012835', #Left
-                      'HP:0032320', #Affected
-                      'HP:0040279', #Frequency
-                      'HP:0040285', #Excluded
-                      'HP:0012832', #Bilateral
-                      'CHEBI:24433', #Group
-                      'CHEBI:52217', #Pharmaceutical
-                      'CHEBI:23888', #Drug
-                      'CHEBI:50906', #Role
-                      'HP:0011009', #Acute
-                      'HP:0012828', #Severe
-                      'HP:0025254', #Ameliorated by
-                      'HP:0032322', #Healthy
-                      'MONDO:0021137', #not rare
+                      'UBERON:0006611',  #Has synonym test
+                      'ENVO:00000026',  #well
+                      'CHEBI:33232',  #application
+                      'CHEBI:75958',  #solution
+                      'ENVO:01000584',  #table
+                      'ENVO:2000036',  #generates
+                      'HP:0012824',  #severity
+                      'HP:0012830',  #Position
+                      'HP:0012834',  #Right
+                      'HP:0012835',  #Left
+                      'HP:0032320',  #Affected
+                      'HP:0040279',  #Frequency
+                      'HP:0040285',  #Excluded
+                      'HP:0012832',  #Bilateral
+                      'CHEBI:24433',  #Group
+                      'CHEBI:52217',  #Pharmaceutical
+                      'CHEBI:23888',  #Drug
+                      'CHEBI:50906',  #Role
+                      'HP:0011009',  #Acute
+                      'HP:0012828',  #Severe
+                      'HP:0025254',  #Ameliorated by
+                      'HP:0032322',  #Healthy
+                      'MONDO:0021137',  #not rare
                       'NCBITaxon:order',
                       'NCBITaxon:family',
-                      'CHEBI:35225', #buffer
-                      'CHEBI:60004', #mixture
-                      'CHEBI:25367', #molecule
-                      'GO:0005623', #cell
-                      'FOODON:03420236', #foodon
-                      'ENVO:01000605', #car
-                      'FOODON:00003004', #animal
-                      'GO:0005488', #binding
-                      'HP:0012825', #Mild
-                      'NCBIGene:4233', #MET
-                      'NCBIGene:55364', #IMPACT
-                      'NCBIGene:6418', #SET
-                      'HP:0030646', #Peripheral
-                      'HP:0040282', #Frequent
-                      'NCBIGene:94005', #PIGS
-                      'HP:0003674', #Onset
-                      'NCBIGene:3815', #KIT
-                      'NCBIGene:4280', #MICE
-                      'UBERON:0004529', #anatomical projection
-                      'HP:0011010', #Chronic
-                      'CHEBI:33893', #reagent
-                      'MONDO:0045042', #localized
-                      'FOODON:03430131', #whole
-                      'FOODON:03412846', #bacteria as food
-                      'HP:0025303', #episodic
-                      'HP:0003745', #Sporadic
-                      'HP:0003676', #Progressive
-                      'HP:0025275', #Lateral
-                      'HP:0020034', #Diffuse
-                      'HP:0031797', #Clinical course
-                      'HP:0012833', #Unilateral
-                      'CHEBI:75830', #HOME
-                      'CHEBI:33731', #cluster
+                      'CHEBI:35225',  #buffer
+                      'CHEBI:60004',  #mixture
+                      'CHEBI:25367',  #molecule
+                      'GO:0005623',  #cell
+                      'FOODON:03420236',  #foodon
+                      'ENVO:01000605',  #car
+                      'FOODON:00003004',  #animal
+                      'GO:0005488',  #binding
+                      'HP:0012825',  #Mild
+                      'NCBIGene:4233',  #MET
+                      'NCBIGene:55364',  #IMPACT
+                      'NCBIGene:6418',  #SET
+                      'HP:0030646',  #Peripheral
+                      'HP:0040282',  #Frequent
+                      'NCBIGene:94005',  #PIGS
+                      'HP:0003674',  #Onset
+                      'NCBIGene:3815',  #KIT
+                      'NCBIGene:4280',  #MICE
+                      'UBERON:0004529',  #anatomical projection
+                      'HP:0011010',  #Chronic
+                      'CHEBI:33893',  #reagent
+                      'MONDO:0045042',  #localized
+                      'FOODON:03430131',  #whole
+                      'FOODON:03412846',  #bacteria as food
+                      'HP:0025303',  #episodic
+                      'HP:0003745',  #Sporadic
+                      'HP:0003676',  #Progressive
+                      'HP:0025275',  #Lateral
+                      'HP:0020034',  #Diffuse
+                      'HP:0031797',  #Clinical course
+                      'HP:0012833',  #Unilateral
+                      'CHEBI:75830',  #HOME
+                      'CHEBI:33731',  #cluster
                       'NCBITaxon:kingdom',
                       'NCBITaxon:phylum',
                       'NCBITaxon:subphylum',
@@ -81,33 +81,46 @@ garbage_curies = set(['MONDO:0019395', #Hinman syndrome with synonym "HAS",
                       'NCBITaxon:genus',
                       'NCBITaxon:species',
                       'NCBITaxon:tribe',
-                      'NCBITaxon:9605', #Homo
-                      'NCBITaxon:3846', #Glycine (?)
-                      'NCBITaxon:1', #Root
-                      'NCBITaxon:2', #Bacteria
-                      'MONDO:0021141', #acquired
-                      'ENVO:00000444', #clearing
-                      'ENVO:00000427', #meander
-                      'CHEBI:33250', #atom
-                      'ENVO:01000604', #vehicle
-                      'HP:0025297', #Prolongued
-                      'HP:0012840', #Proximal
-                      'ENVO:01000588', #sofa
-                      'CHEBI:3608', #protein
-                      'ENVO:00000480', #peak
-                      'HP:0012829', #Profound
-                      'HP:0025285', #Aggravated by
-                      'UPHENO:0001001', #PHENOTYPE
-                      'NCBIGene:5978', #REST
-                      'NCBIGene:3266', #ERAS
-                      'NCBIGene:126669', #SHE
-                      'NCBITaxon:695168', #AREAS
-                      'NCBITaxon:12939', #Anemia.  Who the &*(@&# names a fern anemia?
-                      'NCBITaxon:1369087', #data
-                      'NCBITaxon:3493', #fig
-                      'NCBIGene:1674', #DES, which is a common word in french
-                      'CHEBI:27889', #lead
-                      'GO:0043336', # has synonym REST
+                      'NCBITaxon:9605',  #Homo
+                      'NCBITaxon:3846',  #Glycine (?)
+                      'NCBITaxon:1',  #Root
+                      'NCBITaxon:2',  #Bacteria
+                      'MONDO:0021141',  #acquired
+                      'ENVO:00000444',  #clearing
+                      'ENVO:00000427',  #meander
+                      'CHEBI:33250',  #atom
+                      'ENVO:01000604',  #vehicle
+                      'HP:0025297',  #Prolongued
+                      'HP:0012840',  #Proximal
+                      'ENVO:01000588',  #sofa
+                      'CHEBI:3608',  #protein
+                      'ENVO:00000480',  #peak
+                      'HP:0012829',  #Profound
+                      'HP:0025285',  #Aggravated by
+                      'UPHENO:0001001',  #PHENOTYPE
+                      'NCBIGene:5978',  #REST
+                      'NCBIGene:3266',  #ERAS
+                      'NCBIGene:126669',  #SHE
+                      'NCBITaxon:695168',  #AREAS
+                      'NCBITaxon:12939',  #Anemia.  Who the &*(@&# names a fern anemia?
+                      'NCBITaxon:1369087',  #data
+                      'NCBITaxon:3493',  #fig
+                      'NCBIGene:1674',  #DES, which is a common word in french
+                      'CHEBI:27889',  #lead
+                      'GO:0043336',  # has synonym REST
+                      'NCBIGene:847',  #CAT
+                      'GO:0032502',  #Development
+                      'GO:0008150',  #biological process
+                      'GO:0046903',  #secretion
+                      'GO:0097194',  #execution phase of apoptosis (has apoptosis as synonym)
+                      'GO:0010467',  #gene expression
+                      'NCBIGene:55806',  #HR causes problem as an abbreviation for hour
+                      'NCBIGene:4149',  # MAX
+                      'NCBIGene:572',  # BAD
+                      'NCBIGene:637',  # BID
+                      'NCBIGene:3423',  # IDS
+                      'NCBIGene:5091',  # PC
+                      'NCBIGene:6651',  # SON
                       ])
 
 
