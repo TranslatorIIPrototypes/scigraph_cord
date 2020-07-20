@@ -5,6 +5,8 @@ from collections import defaultdict
 
 #These are curies that tend to give a lot of false positives, or are generally
 # too general to be of interest
+# Genes are handled differently because the filtering happens at a per-annotation level, not an
+# entity level.
 garbage_curies = set(['MONDO:0019395',  #Hinman syndrome with synonym "HAS",
                       'MONDO:0012833',  #"CAN"
                       'MONDO:0000001',  #disease
@@ -45,15 +47,9 @@ garbage_curies = set(['MONDO:0019395',  #Hinman syndrome with synonym "HAS",
                       'FOODON:00003004',  #animal
                       'GO:0005488',  #binding
                       'HP:0012825',  #Mild
-                      'NCBIGene:4233',  #MET
-                      'NCBIGene:55364',  #IMPACT
-                      'NCBIGene:6418',  #SET
                       'HP:0030646',  #Peripheral
                       'HP:0040282',  #Frequent
-                      'NCBIGene:94005',  #PIGS
                       'HP:0003674',  #Onset
-                      'NCBIGene:3815',  #KIT
-                      'NCBIGene:4280',  #MICE
                       'UBERON:0004529',  #anatomical projection
                       'HP:0011010',  #Chronic
                       'CHEBI:33893',  #reagent
@@ -98,29 +94,17 @@ garbage_curies = set(['MONDO:0019395',  #Hinman syndrome with synonym "HAS",
                       'HP:0012829',  #Profound
                       'HP:0025285',  #Aggravated by
                       'UPHENO:0001001',  #PHENOTYPE
-                      'NCBIGene:5978',  #REST
-                      'NCBIGene:3266',  #ERAS
-                      'NCBIGene:126669',  #SHE
                       'NCBITaxon:695168',  #AREAS
                       'NCBITaxon:12939',  #Anemia.  Who the &*(@&# names a fern anemia?
                       'NCBITaxon:1369087',  #data
                       'NCBITaxon:3493',  #fig
-                      'NCBIGene:1674',  #DES, which is a common word in french
                       'CHEBI:27889',  #lead
                       'GO:0043336',  # has synonym REST
-                      'NCBIGene:847',  #CAT
                       'GO:0032502',  #Development
                       'GO:0008150',  #biological process
                       'GO:0046903',  #secretion
                       'GO:0097194',  #execution phase of apoptosis (has apoptosis as synonym)
                       'GO:0010467',  #gene expression
-                      'NCBIGene:55806',  #HR causes problem as an abbreviation for hour
-                      'NCBIGene:4149',  # MAX
-                      'NCBIGene:572',  # BAD
-                      'NCBIGene:637',  # BID
-                      'NCBIGene:3423',  # IDS
-                      'NCBIGene:5091',  # PC
-                      'NCBIGene:6651',  # SON
                       ])
 
 
@@ -347,13 +331,34 @@ class Normalizer():
                 except KeyError:
                     continue
 
+def read_accepted():
+    #We look at gene matches more critically.  There are genes where ALL CAPS gene symbols should
+    # be filtered out, usually b/c they are acronyms for something else
+    # There are genes where non-all caps should be filtered out, either they are another word or
+    # something else.  There are a few cases where particular cased versions of the symbol should
+    # be accepted, and the others rejected.
+    accepted_forms = defaultdict(set)
+    with open('gene_filters.txt','r') as inf:
+        h = inf.readline()
+        for line in inf:
+            x = line[:-1].split('\t')
+            if len(x) != 7:
+                print(x)
+            symbol = x[0]
+            if len(x[3].strip()) == 0:
+                accepted_forms[symbol].add(symbol)
+            imperfect = x[5].strip()
+            if len(imperfect) == 0:
+                #This is a hack
+                accepted_forms[symbol].add('..any..')
+            elif imperfect == '/':
+                oks = x[6].strip().split(' ')
+                accepted_forms[symbol].update(oks)
+    return accepted_forms
 
-def normalize(indir,outdir,pmidcol=1,termcol=7,labelcol=8):
+def normalize(indir,outdir,pmidcol=1,termcol=8,labelcol=9,cleanmatchcol=6):
     normy = Normalizer()
     rfiles = os.listdir(indir)
-    #pmidcol = 1
-    #termcol = 7
-    #labelcol=8
     for rf in rfiles:
         with open(f'{indir}/{rf}','r') as inf:
             for line in inf:
@@ -368,14 +373,32 @@ def normalize(indir,outdir,pmidcol=1,termcol=7,labelcol=8):
     normy.normalize_all()
     normy.write(f'{outdir}/normalized.txt')
     papers = set()
+    accepted_genes = read_accepted()
     for i,rf in enumerate(rfiles):
         with open(f'{indir}/{rf}','r') as inf, open(f'{outdir}/annotation_{i}.txt','w') as outf:
             outf.write('Curie\tPaper\n')
             for line in inf:
                 x = line.strip().split('\t')
+                #If this is a gene, we need to decide if this is a good annotation, or garbage
+                term = x[termcol]
+                if term.startswith('https://www.genenames.org/data/gene-symbol-report/'):
+                    #It's a gene
+                    label = x[labelcol].split(']')[0][1:]
+                    text = x[cleanmatchcol][1:-1]
+                    if text.upper() != label:
+                        #this is stuff like 'setting' for SET.
+                        print(f'Skipping {text} {label}')
+                        continue
+                    if text == label and label not in accepted_genes[label]:
+                        #The annotation is all caps, but all caps is not accepted for this gene.
+                        print(f'Skipping {text}')
+                        continue
+                    if text not in accepted_genes[label] and '..any..' not in accepted_genes[label]:
+                        print(f'Skipping {text}')
+                        continue
+                #if we made it this far, it's either not a gene, or it's a gene that is really a gene.
                 pmid = x[pmidcol]
                 papers.add(pmid)
-                term = x[termcol]
                 curie = normy.normalize(term)
                 if curie is not None:
                     outf.write(f'{curie}\t{pmid}\n')

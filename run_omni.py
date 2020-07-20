@@ -3,8 +3,9 @@ from subprocess import call
 from generate_omnicorp_table_script import generate_psql_script
 
 def go():
-    #normalize('omnicorp_input','omnicorp_output',pmidcol=0,termcol=1,labelcol=None)
-    #call('sort omnicorp_output/annotation_0.txt | uniq > omnicorp_output/annotation_1.txt', shell=True)
+    normalize('omnicorp_input','omnicorp_output',pmidcol=0,termcol=1,labelcol=None)
+    call('sort -T . omnicorp_output/annotation_0.txt | uniq > omnicorp_output/annotation_1.txt', shell=True)
+    call('sort output/annotation_0.txt | uniq > omnicorp_output/annotation_1.txt', shell=True)
     ##
     # annotation_1 looks like
     # CHEBI:100       https://www.ncbi.nlm.nih.gov/pubmed/30176279
@@ -17,11 +18,11 @@ def go():
     # MONDO:0100096	DOI:10.1016/0168-1702(86)90086-9
     # ENVO:01000965	DOI:10.1016/0378-1097(85)90057-6d
     # now clean up
-    #curify('omnicorp_output/annotation_1.txt', 'omnicorp_output/annotation_2.txt')
+    curify('omnicorp_output/annotation_1.txt', 'omnicorp_output/annotation_2.txt')
     #combine omnicorp and cord
     call('cat omnicorp_output/annotation_2.txt output/annotation_0.txt | sort | uniq > omnicorp_output/annotation_3.txt', shell=True)
     make_final('omnicorp_output','omnicorp_final')
-    #generate_psql_script('omnicorp_final',set(['CGNC','Curie','ENSEMBL','FBDV']))
+    generate_psql_script('omnicorp_final',set(['CGNC','Curie','ENSEMBL','FBDV']))
 
 def curify(infname,outfname):
     with open(infname,'r') as inf, open(outfname,'w') as outf:
