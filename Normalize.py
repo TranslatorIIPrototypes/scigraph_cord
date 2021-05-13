@@ -317,7 +317,7 @@ class Normalizer():
     def write(self,ofile):
         """Write normalized entities to a file"""
         print(f'writing to {ofile}')
-        with open(ofile, 'w') as outf:
+        with open(ofile, 'w') as outf, open('translation','w') as otheroutf:
             outf.write('normalized_curie\tsemantic_type\tlabel\n')
             for iri,curie in self.iri_to_curie.items():
                 try:
@@ -328,6 +328,7 @@ class Normalizer():
                     else:
                         label = self.iri_to_label[iri]
                     outf.write(f'{normcurie}\t{normtype}\t{label}\n')
+                    otheroutf.write(f'{iri}\t{curie}\t{normcurie}\n')
                 except KeyError:
                     continue
 
@@ -366,7 +367,13 @@ def normalize(indir,outdir,pmidcol=1,termcol=8,labelcol=9,cleanmatchcol=6):
                 pmid = x[pmidcol]
                 term = x[termcol]
                 if labelcol is not None:
-                    label = x[labelcol].split(']')[0][1:]
+                    try:
+                        label = x[labelcol].split(']')[0][1:]
+                    except:
+                        print('bonk')
+                        print(line)
+                        print(x)
+                        exit()
                 else:
                     label=None
                 normy.add(term,label)
@@ -383,19 +390,26 @@ def normalize(indir,outdir,pmidcol=1,termcol=8,labelcol=9,cleanmatchcol=6):
                 term = x[termcol]
                 if term.startswith('https://www.genenames.org/data/gene-symbol-report/'):
                     #It's a gene
-                    label = x[labelcol].split(']')[0][1:]
-                    text = x[cleanmatchcol][1:-1]
-                    if text.upper() != label:
-                        #this is stuff like 'setting' for SET.
-                        print(f'Skipping {text} {label}')
-                        continue
-                    if text == label and label not in accepted_genes[label]:
-                        #The annotation is all caps, but all caps is not accepted for this gene.
-                        print(f'Skipping {text}')
-                        continue
-                    if text not in accepted_genes[label] and '..any..' not in accepted_genes[label]:
-                        print(f'Skipping {text}')
-                        continue
+                    if labelcol is not None:
+                        try:
+                            label = x[labelcol].split(']')[0][1:]
+                        except:
+                            print('bonk')
+                            print(line)
+                            print(x)
+                            exit()
+                        text = x[cleanmatchcol][1:-1]
+                        if text.upper() != label:
+                            #this is stuff like 'setting' for SET.
+                            #print(f'Skipping {text} {label}')
+                            continue
+                        if text == label and label not in accepted_genes[label]:
+                            #The annotation is all caps, but all caps is not accepted for this gene.
+                            #print(f'Skipping {text}')
+                            continue
+                        if text not in accepted_genes[label] and '..any..' not in accepted_genes[label]:
+                            #print(f'Skipping {text}')
+                            continue
                 #if we made it this far, it's either not a gene, or it's a gene that is really a gene.
                 pmid = x[pmidcol]
                 papers.add(pmid)

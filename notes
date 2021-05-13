@@ -1,0 +1,68 @@
+The co-occurence has been parallelized.   This complicates the process a bit.
+
+sinteractive
+conda activate translator
+python calculate.py (just does the normalizer now)
+python generate_counts.py (gets all the covid-X links)
+
+sbatch coocr.sh
+Wait for the jobs to finish
+cat together the output/pairs and put annotation, pairs, and normalize in /scratch/bizon...
+
+To rebuild omni,
+python run_omni.py
+
+This ends up making omnicorp_final and a new omnicorp builder script.
+
+We need to then connect to the omnicorp postgres.  
+That database is exposed via the IP: omnicorp.edc.renci.org
+
+now see if we can psql into that guy
+psql -h omnicorp.edc.renci.org -p 5432 robokop murphy
+
+Now, we want to blow away the old db to prepare for the new one.
+
+# DROP SCHEMA omnicorp CASCADE;
+
+Then exit, and run the create omnicorp script:
+
+psql -h omnicorp.edc.renci.org -p 5432 -f create_omnicorp.sql robokop murphy
+
+* It might require moving over to robokopdb1 for the biggest files (MESH).
+* To get this to work without the server borking, I split MESH into 3 files (just with unix split)
+* Even with that, it died creating the second index, so I had to do that by hand
+* None of the above is scripted, so it requires a bit of handiwork.
+
+Once those are built, we need to build the redis.  It could be done pointing at the live redis, but in this case, we're going to do it on a blank redis, then move the file
+
+Now, we need to build the redis.  The redis needs a lot of memory to build, and we also need to have access to the postgres that we just loaded.  We used to pull directly from the postgres the whole tables, but that lead to timeouts when running from hatteras, while running from somewhere that didn't timeout (like robokopdev) there wasn't enough mem for the redis.
+
+So, the code now pulls the files from disk (it still pulls counts from the postgres).
+
+So, on ht3, do a screen, then 
+sinteractive -m 256000
+hostname
+redis-server --protected-mode no
+
+The protected mode is so that we can log in from a different machine
+
+On another ht3 do a screen
+sinteractive -m 16000
+
+Update shared/robokop.env to point omni and cache:
+
+OMNICORP_HOST=omnicorp.edc.renci.org
+OMNICORP_PORT=5432
+OMNICORP_DB=robokop
+OMNICORP_USER=murphy
+#OMNICORP_PASSWORD
+
+# HTTP Cache - Redis
+CACHE_HOST=<host where the redis server is running from hostname above>
+CACHE_PORT=6379
+CACHE_DB=0
+
+conda activate omnicorp
+source ./deploy/setenv.sh
+export PYTHONPATH=.:../robokop-genetics/
+(translator) [bizon@robokopdev robo-commons]$ python crawler/crawl_all.py -o

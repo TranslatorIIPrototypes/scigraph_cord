@@ -1,8 +1,9 @@
 import os
 
 def write_block(dname,prefix,outf):
-    tablename = 'omnicorp.{}'.format(prefix)
-    outf.write('CREATE TABLE {} ( pubmedid int, curie varchar(255) );\n'.format(tablename))
+    use_pref = '_'.join(prefix.split('.'))
+    tablename = 'omnicorp.{}'.format(use_pref)
+    outf.write('CREATE TABLE {} ( pubmedid varchar(255), curie varchar(255) );\n'.format(tablename))
     outf.write(f"\copy {tablename} FROM '{dname}/{prefix}' DELIMITER E'\\t' CSV\n")
     outf.write("CREATE INDEX ON {} (pubmedid);\n".format(tablename))
     outf.write("CREATE INDEX ON {} (curie);\n".format(tablename))

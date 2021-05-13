@@ -1,9 +1,9 @@
-import os
+import os,sys,math
 from scipy.stats import hypergeom
 from collections import defaultdict
 
-def make_pairs_by_type(wdir,p_cutoff=1e-7):
-    relevance = 1. / 30.
+def make_pairs_by_type(wdir,jobnum,numjobs,p_cutoff=1e-7):
+    relevance = 1. / 30. #this is a made up scaling factor.  Can be tuned to (de)emphasize these edges.
     terms_to_papers = defaultdict(set)
     rfiles = os.listdir(wdir)
     types = {}
@@ -32,9 +32,18 @@ def make_pairs_by_type(wdir,p_cutoff=1e-7):
                 if typei != typej:
                     type_pairs[typej][typei] += 1
     terms = list(terms_to_papers.keys())
-    with open(f'{wdir}/pairsbt.txt','w') as outf:
+    #since we're distributing, we need all the jobs to have the same order
+    terms.sort()
+    with open(f'{wdir}/pairsbt_{jobnum}.txt','w') as outf:
+        x = len(terms)
+        lower = 1-math.sqrt((numjobs-jobnum)/numjobs)
+        upper = 1-math.sqrt((numjobs-(jobnum+1))/numjobs)
+        first = int(lower*x)
+        last = int(upper*x)
+        print(i+1,first,last)
         outf.write('Term1\tTerm2\tCountTerm1\tCountTerm2\tSharedCount\tTotal_papers\tEnrichment_p\tEffective_Pubs\n')
-        for i,Term1 in enumerate(terms):
+        for i in range(first,last):
+            Term1 = terms[i]
             for Term2 in terms[i+1:]:
                 type1 = types[Term1]
                 type2 = types[Term2]
@@ -46,7 +55,7 @@ def make_pairs_by_type(wdir,p_cutoff=1e-7):
                 CountTerm2 = len(terms2)
                 if SharedCount > 0:
                     enrichp = hypergeom.sf(SharedCount - 1, total_paper_count, CountTerm2, CountTerm1)
-                    if enrichp < p_cutoff:
+                    if ( enrichp < p_cutoff) or ( Term1 == 'MONDO:0100096')  or (Term2 == 'MONDO:0100096'):
                         cov = (SharedCount / total_paper_count) - (CountTerm1 / total_paper_count) * (CountTerm2 / total_paper_count)
                         cov = max((cov, 0.0))
                         effective_pubs = cov * total_paper_count * relevance
@@ -84,3 +93,8 @@ def make_pairs(wdir,total_paper_count,p_cutoff=1e-7):
                         effective_pubs = cov * total_paper_count * relevance
                         outf.write(f'{Term1}\t{Term2}\t{CountTerm1}\t{CountTerm2}\t{SharedCount}\t{enrichp}\t{effective_pubs}\n')
 
+if __name__ == '__main__':
+    output_directory = sys.argv[1]
+    this_job = int(sys.argv[2])
+    total_jobs = int(sys.argv[3])
+    make_pairs_by_type(output_directory,this_job,total_jobs,1e-20)
